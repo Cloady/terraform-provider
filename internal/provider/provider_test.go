@@ -144,6 +144,9 @@ resource "cloady_app" "api" {
 			resource.TestCheckResourceAttr("cloady_app.api", "git.branch", "main"),
 			resource.TestCheckResourceAttr("cloady_app.api", "git.auto_deploy", "true"),
 			resource.TestCheckResourceAttr("cloady_app.api", "cpu_scale", "1"),
+			// The create response carries the public URL, so endpoints[0] is
+			// usable in an output on the very first apply.
+			resource.TestCheckResourceAttr("cloady_app.api", "endpoints.0", "https://api-demo.cloady.io"),
 		)},
 		{Config: config("release", false), Check: resource.ComposeAggregateTestCheckFunc(
 			resource.TestCheckResourceAttr("cloady_app.api", "git.branch", "release"),
@@ -277,7 +280,8 @@ func (m *mockAPI) handleApp(t *testing.T, w http.ResponseWriter, r *http.Request
 		m.app = map[string]any{
 			"slug": "api", "env": body["env"], "name": body["name"], "region": body["region"],
 			"status": "deploying", "source": source, "scale": body["scale"],
-			"endpoints": []any{}, "subServices": []any{}, "uptime": "", "limits": map[string]any{},
+			"endpoints":   []any{map[string]any{"component": "web", "url": "https://api-demo.cloady.io"}},
+			"subServices": []any{}, "uptime": "", "limits": map[string]any{},
 		}
 		w.WriteHeader(201)
 		write(map[string]any{"app": m.app})
